@@ -409,7 +409,7 @@ const toggleSound = () => {
   };
 };
 // === LOOP1 MUSIC AUTO PLAY + LOOP ===
-window.addEventListener("load", () => {
+window.addEventListener("click", () => {
   // set loop true always
   el.loop1.loop = true;
   el.loop1.volume = 1.0;
