@@ -425,6 +425,7 @@ window.addEventListener("click", () => {
       // wait for first click to start
       const startMusic = () => {
         audio.play().catch(err => console.log(err));
+        audio.currentTime = 0;
         el.loop1.play();
         console.log("Loop1 started after user click ✅");
         window.removeEventListener("click", startMusic);
