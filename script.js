@@ -408,28 +408,72 @@ const toggleSound = () => {
     on = !on;
   };
 };
-// === LOOP1 MUSIC AUTO PLAY + LOOP ===
-window.addEventListener("click", () => {
-  // set loop true always
-  el.loop1.loop = true;
-  el.loop1.volume = 1.0;
-  el.loop1.muted = false;
+// // === LOOP1 MUSIC AUTO PLAY + LOOP ===
+// window.addEventListener("click", () => {
+//   // set loop true always
+//   el.loop1.loop = true;
+//   el.loop1.volume = 1.0;
+//   el.loop1.muted = false;
 
-  // try to autoplay immediately
-  el.loop1.play()
-    .then(() => {
-      console.log("Loop1 started automatically ✅");
-    })
-    .catch(err => {
-      console.log("Autoplay blocked ❌ — waiting for click...");
-      // wait for first click to start
-      const startMusic = () => {
-        audio.play().catch(err => console.log(err));
-        audio.currentTime = 0;
-        el.loop1.play();
-        console.log("Loop1 started after user click ✅");
-        window.removeEventListener("click", startMusic);
-      };
-      window.addEventListener("click", startMusic);
+//   // try to autoplay immediately
+//   el.loop1.play()
+//     .then(() => {
+//       console.log("Loop1 started automatically ✅");
+//     })
+//     .catch(err => {
+//       console.log("Autoplay blocked ❌ — waiting for click...");
+//       // wait for first click to start
+//       const startMusic = () => {
+//         audio.play().catch(err => console.log(err));
+//         audio.currentTime = 0;
+//         el.loop1.play();
+//         console.log("Loop1 started after user click ✅");
+//         window.removeEventListener("click", startMusic);
+//       };
+//       window.addEventListener("click", startMusic);
+//     });
+// });
+  let audioCtx;
+    let source;
+    let buffer;
+
+    async function initAudio() {
+      try {
+        // Create context
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Fetch & decode sound
+        const response = await fetch("music/bloop.mp3"); // your file path
+        const arrayBuffer = await response.arrayBuffer();
+        buffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+        // Play loop
+        playSound();
+
+        // Hide start screen
+        document.getElementById("startScreen").style.display = "none";
+      } catch (err) {
+        console.error("Audio error:", err);
+      }
+    }
+
+    function playSound() {
+      if (!buffer) return;
+      if (source) source.stop(); // stop old one if exists
+
+      source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+
+      source.connect(audioCtx.destination);
+      source.start(0);
+    }
+
+    // Resume context on tap
+    document.body.addEventListener("click", async () => {
+      if (!audioCtx || audioCtx.state === "closed") {
+        await initAudio();
+      } else if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
+      }
     });
-});
