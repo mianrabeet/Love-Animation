@@ -408,72 +408,92 @@ const toggleSound = () => {
     on = !on;
   };
 };
-// // === LOOP1 MUSIC AUTO PLAY + LOOP ===
-// window.addEventListener("click", () => {
-//   // set loop true always
-//   el.loop1.loop = true;
-//   el.loop1.volume = 1.0;
-//   el.loop1.muted = false;
+// ===============
+//   SOUND SETUP
+// ===============
+let audioCtx;
+let loopBuffer;
+let loopSource;
 
-//   // try to autoplay immediately
-//   el.loop1.play()
-//     .then(() => {
-//       console.log("Loop1 started automatically ✅");
-//     })
-//     .catch(err => {
-//       console.log("Autoplay blocked ❌ — waiting for click...");
-//       // wait for first click to start
-//       const startMusic = () => {
-//         audio.play().catch(err => console.log(err));
-//         audio.currentTime = 0;
-//         el.loop1.play();
-//         console.log("Loop1 started after user click ✅");
-//         window.removeEventListener("click", startMusic);
-//       };
-//       window.addEventListener("click", startMusic);
-//     });
-// });
-  let audioCtx;
-    let source;
-    let buffer;
+async function initAudio() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    async function initAudio() {
-      try {
-        // Create context
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Fetch & decode your loop music file
+    const response = await fetch("music/loop.mp3");
+    const arrayBuffer = await response.arrayBuffer();
+    loopBuffer = await audioCtx.decodeAudioData(arrayBuffer);
 
-        // Fetch & decode sound
-        const response = await fetch("music/bloop.mp3"); // your file path
-        const arrayBuffer = await response.arrayBuffer();
-        buffer = await audioCtx.decodeAudioData(arrayBuffer);
+    playLoop();
+  } catch (err) {
+    console.error("Audio error:", err);
+  }
+}
 
-        // Play loop
-        playSound();
+function playLoop() {
+  if (!loopBuffer) return;
 
-        // Hide start screen
-        document.getElementById("startScreen").style.display = "none";
-      } catch (err) {
-        console.error("Audio error:", err);
-      }
-    }
+  // Stop existing loop if already playing
+  if (loopSource) {
+    loopSource.stop();
+  }
 
-    function playSound() {
-      if (!buffer) return;
-      if (source) source.stop(); // stop old one if exists
+  loopSource = audioCtx.createBufferSource();
+  loopSource.buffer = loopBuffer;
+  loopSource.loop = true;
 
-      source = audioCtx.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
+  const gainNode = audioCtx.createGain();
+  gainNode.gain.value = 1.0; // 100% volume
+  loopSource.connect(gainNode).connect(audioCtx.destination);
 
-      source.connect(audioCtx.destination);
-      source.start(0);
-    }
+  loopSource.start(0);
+  console.log("Loop started 🎵");
+}
 
-    // Resume context on tap
-    document.body.addEventListener("click", async () => {
-      if (!audioCtx || audioCtx.state === "closed") {
-        await initAudio();
-      } else if (audioCtx.state === "suspended") {
-        await audioCtx.resume();
-      }
-    });
+// Make sure audio stays resumed on focus/touch
+function ensureAudioRunning() {
+  if (audioCtx && audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+}
+document.addEventListener("visibilitychange", ensureAudioRunning);
+window.addEventListener("focus", ensureAudioRunning);
+document.body.addEventListener("touchstart", ensureAudioRunning);
+
+// ===============
+//   FIRST TAP OVERLAY
+// ===============
+const overlay = document.createElement("div");
+overlay.innerText = "Tap to Start ❤️";
+Object.assign(overlay.style, {
+  position: "fixed",
+  inset: 0,
+  background: "#000",
+  color: "#fff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "22px",
+  zIndex: 9999,
+});
+document.body.appendChild(overlay);
+
+overlay.addEventListener("click", async () => {
+  overlay.style.display = "none";
+  await initAudio();
+  startAnimation();
+});
+
+// ===============
+//   YOUR ANIMATION LOGIC
+// ===============
+function startAnimation() {
+  // your mo.js animation code here, e.g.:
+  console.log("Animation started ❤️");
+
+  // You can also trigger your blup/blop sound here
+  const blup = document.querySelector(".blup");
+  const blop = document.querySelector(".blop");
+  blup.volume = 1.0;
+  blop.volume = 1.0;
+}
