@@ -424,6 +424,7 @@ window.addEventListener("click", () => {
       console.log("Autoplay blocked ❌ — waiting for click...");
       // wait for first click to start
       const startMusic = () => {
+        audio.play().catch(err => console.log(err));
         el.loop1.play();
         console.log("Loop1 started after user click ✅");
         window.removeEventListener("click", startMusic);
